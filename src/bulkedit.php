@@ -1,6 +1,6 @@
 <?php
-require_once 'app/Mage.php';
-require_once "phar://BulkProductEdit.phar/progressbar.class.php";
+require_once '../../app/Mage.php';
+require_once 'progressbar.class.php';
 class Bulkedit{
   public function __construct()
   {
@@ -13,11 +13,27 @@ class Bulkedit{
             $line = fgets($handle);
             if(!trim($line)){
                 echo "All Products selected!\n";
-                return Mage::getModel('catalog/product')->getCollection();
+                $IDS = array();
+                foreach( Mage::getModel('catalog/product')->getCollection() as $prod){
+                  array_push($IDS, $prod->getId());
+                } 
+            }else{
+              $input = explode (':', trim($line));
+              if (count($input) > 1){
+                $return = array();
+                for($i=$input[0]; $i<=$input[1]; $i++) {
+                  array_push($return, $i);
+                }
+                $IDS = $return;
+              }
+
+              $IDS = $input;
             }
+
             $products = array();
-            foreach (explode (':', trim($line)) as $productID){
-              array_push($products,Mage::getModel('catalog/product')->loadByAttribute('sku',$productID));
+            foreach ($IDS as $productID){
+              var_dump($productID);
+              //array_push($products,Mage::getModel('catalog/product')->load($productID));
             }
             return $products;
           }
@@ -26,8 +42,9 @@ class Bulkedit{
           $progressBar = new ProgressBar(count($products));
 
           foreach($products as $product) {
-            $stockItem = Mage::getModel('cataloginventory/stock_item')->loadByProduct($product);
-            if (!$stockItem->getId()) {
+            var_dump($product->getId());
+            //$stockItem = Mage::getModel('cataloginventory/stock_item')->loadByProduct($product);
+            /*if (!$stockItem->getId()) {
                 $stockItem->setData('product_id', $product->getId());
                 $stockItem->setData('stock_id', 1); 
             }
@@ -47,7 +64,9 @@ class Bulkedit{
             } catch (Exception $e) {
                 echo "{$e}";
             }  
+            */
           }
           echo "Edited ".count($products) . " products\n";
+          
   }
 }

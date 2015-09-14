@@ -1,8 +1,0 @@
-test:
-  override:
-    - echo "Nothing to do here"
-deployment:
-  production:
-    branch: master
-    commands:
-      - php create-phar.php
