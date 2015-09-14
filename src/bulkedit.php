@@ -13,11 +13,25 @@ class Bulkedit{
             $line = fgets($handle);
             if(!trim($line)){
                 echo "All Products selected!\n";
-                return Mage::getModel('catalog/product')->getCollection();
+                $IDS = array();
+                foreach( Mage::getModel('catalog/product')->getCollection() as $prod){
+                  array_push($IDS, $prod->getId());
+                } 
+            }else{
+              $input = explode (':', trim($line));
+              if (count($input) > 1){
+                $return = array();
+                for($i=$input[0]; $i<=$input[1]; $i++) {
+                  array_push($return, $i);
+                }
+                $IDS = $return;
+              }else{
+                $IDS = $input;
+              }
             }
             $products = array();
-            foreach (explode (':', trim($line)) as $productID){
-              array_push($products,Mage::getModel('catalog/product')->loadByAttribute('sku',$productID));
+            foreach ($IDS as $productID){
+              array_push($products,Mage::getModel('catalog/product')->load($productID));
             }
             return $products;
           }
