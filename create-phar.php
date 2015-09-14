@@ -1,6 +1,6 @@
 <?php
 $srcRoot = "~/magento-bulk-product-edit/src";
-$buildRoot = "~/magento-bulk-product-edit/build";
+$buildRoot = getenv('CIRCLE_ARTIFACTS');
  
 $phar = new Phar($buildRoot . "/BuldProductEdit.phar", 
 	FilesystemIterator::CURRENT_AS_FILEINFO |     	FilesystemIterator::KEY_AS_FILENAME, "BuldProductEdit.phar");
