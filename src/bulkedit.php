@@ -1,6 +1,6 @@
 <?php
 require_once '../app/Mage.php';
-require_once 'progressbar.class.php';
+require_once "phar://BulkProductEdit.phar/progressbar.class.php";
 class Bulkedit{
   public function __construct()
   {
