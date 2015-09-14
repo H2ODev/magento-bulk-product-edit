@@ -5,4 +5,4 @@ deployment:
   production:
     branch: master
     commands:
-      - php create-phar.sh
+      - php create-phar.php
