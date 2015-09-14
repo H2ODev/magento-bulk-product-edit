@@ -1,0 +1,1 @@
+# magento-bulk-article-edit
