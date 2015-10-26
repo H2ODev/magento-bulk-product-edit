@@ -2,12 +2,51 @@
 require_once 'app/Mage.php';
 require_once "phar://BulkProductEdit.phar/progressbar.class.php";
 class Bulkedit{
+  private $access_token = "0745f5b5-61c7-48f4-b6f2-22d4ec7dc520";
   public function __construct()
   {
     Mage::app('0');
   }
-  public static function run() {
-         function getProductSelection(){
+  public function run() {
+
+          $products = $this->getProductSelection();
+          $progressBar = new ProgressBar(count($products));
+          $countProducts = count($products);
+
+          foreach($products as $product) {
+            $oldISBN = $product->getIsbn();
+            $title = urlencode($product->getName());
+            $url = "http://api.vlb.de/api/v1/products?search=IS=" . $oldISBN . "%20TI=" . $title . "&access_token=" . $this->access_token;
+            $response = json_decode($this->callAPI('GET',$url));
+
+            if (count($response->content) > 1){
+              echo $progressBar->drawCurrentProgress();
+              echo "Failed asserting: " . $product->getId();
+              $countProducts--;
+              return;
+            }else if (count($response->content) == 0){
+              echo $progressBar->drawCurrentProgress();
+              echo "No result for: " . $product->getId();
+              $countProducts--;
+              return;
+            }
+            if ($oldISBN != current($response->content)->identifier){
+              $product->setIsbn(current($response->content)->identifier);
+              $product->setEan(current($response->content)->identifier);
+              try {
+                $product->save();
+                echo $progressBar->drawCurrentProgress();
+              } catch (Exception $e) {
+                  echo "{$e}";
+              } 
+            }else{
+              echo $progressBar->drawCurrentProgress();
+              $countProducts--;
+            }
+          }
+          echo "Edited ".$countProducts . " products\n";
+  }
+  private function getProductSelection(){
             echo "Select Product (empty/sku/sku:sku range): ";
             $handle = fopen ("php://stdin","r");
             $line = fgets($handle);
@@ -35,33 +74,32 @@ class Bulkedit{
             }
             return $products;
           }
+  private function callAPI($method, $url, $data = false)
+  {
+      $curl = curl_init();
 
-          $products = getProductSelection();
-          $progressBar = new ProgressBar(count($products));
+      switch ($method)
+      {
+          case "POST":
+              curl_setopt($curl, CURLOPT_POST, 1);
 
-          foreach($products as $product) {
-            $stockItem = Mage::getModel('cataloginventory/stock_item')->loadByProduct($product);
-            if (!$stockItem->getId()) {
-                $stockItem->setData('product_id', $product->getId());
-                $stockItem->setData('stock_id', 1); 
-            }
-            $stockItem->setData('manage_stock', 1);
-            $stockItem->setData('use_config_manage_stock', 1);
-            $stockItem->setData('is_in_stock', 1);
-            $stockItem->setData('use_config_notify_stock_qty', 1);
-            $stockItem->setData('use_config_max_sale_qty', 1);
-            $stockItem->setData('use_config_min_sale_qty', 1);
-            $stockItem->setData('use_config_backorders', 1);
-            $stockItem->setData('use_config_min_qty', 1);
-            $stockItem->setData('use_config_enable_qty_inc', 1);
-            try {
-              $stockItem->save();
-              $product->save();
-              echo $progressBar->drawCurrentProgress();
-            } catch (Exception $e) {
-                echo "{$e}";
-            }  
-          }
-          echo "Edited ".count($products) . " products\n";
+              if ($data)
+                  curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+              break;
+          case "PUT":
+              curl_setopt($curl, CURLOPT_PUT, 1);
+              break;
+          default:
+              if ($data)
+                  $url = sprintf("%s?%s", $url, http_build_query($data));
+      }
+      curl_setopt($curl, CURLOPT_HTTPHEADER, array('Content-Type: application/json','Accept: application/json-short'));
+      curl_setopt($curl, CURLOPT_URL, $url);
+      curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+      $result = curl_exec($curl);
+
+      curl_close($curl);
+
+      return $result;
   }
 }
