@@ -21,14 +21,13 @@ class Bulkedit{
 
             if (count($response->content) > 1){
               echo $progressBar->drawCurrentProgress();
-              echo "Failed asserting: " . $product->getId();
+              var_dump("Failed asserting: " . $product->getId());
               $countProducts--;
-              return;
+              continue;
             }else if (count($response->content) == 0){
               echo $progressBar->drawCurrentProgress();
-              echo "No result for: " . $product->getId();
               $countProducts--;
-              return;
+              continue;
             }
             if ($oldISBN != current($response->content)->identifier){
               $product->setIsbn(current($response->content)->identifier);
